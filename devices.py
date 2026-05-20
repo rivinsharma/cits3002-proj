@@ -56,3 +56,9 @@ class Router:
         self.interfaces = interfaces 
         self.mac_table = mac_table 
         self.routing_table = routing_table 
+
+
+    def receive_frame(self, frame, incoming_interface):
+        print(f"{self.name}: Layer 2: Frame received on {incoming_interface}")
+        print(f"{self.name}: Layer 2: Source MAC learned: {frame.src_mac} on {incoming_interface}")
+        print(f"{self.name}: Layer 2: Packet delivered to Network Layer")
