@@ -10,7 +10,7 @@ class Host:
         self.mac_table = mac_table 
         self.expected_seq = 0
 
-    def send_data(self, data, destination_ip, router):
+    def send_data(self, data, destination_ip, router, host_b):
         segment = Segment (
             src_port = 5000,
             dst_port = 80,
