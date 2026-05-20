@@ -10,4 +10,10 @@ class Host:
         self.mac_table = mac_table 
         self.expected_seq = 0
 
-        
+
+class Router:
+    def __init__(self, name, interfaces, mac_table, routing_table):
+        self.name = name
+        self.interfaces = interfaces 
+        self.mac_table = mac_table 
+        self.routing_table = routing_table 
