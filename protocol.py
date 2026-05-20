@@ -5,7 +5,7 @@ class Segment:
         self.data = data
         self.type = seg_type   # 0 DATA, 1 ACK
         self.seq = seq
-        self.length = 9 + len(data)
+        self.length = 9 + len(str(data))
         self.checksum = self.compute_checksum()
 
     def compute_checksum(self):
