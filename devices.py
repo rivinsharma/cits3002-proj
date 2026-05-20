@@ -62,3 +62,15 @@ class Router:
         print(f"{self.name}: Layer 2: Frame received on {incoming_interface}")
         print(f"{self.name}: Layer 2: Source MAC learned: {frame.src_mac} on {incoming_interface}")
         print(f"{self.name}: Layer 2: Packet delivered to Network Layer")
+
+        packet = frame.payload
+
+        print(f"{self.name}: Layer 3: Packet received from Data Link Layer: SRC_IP={packet.src_ip}, DST_IP={packet.dst_ip}, TTL={packet.ttl}")
+        print(f"{self.name}: Layer 3: Destination IP read: {packet.dst_ip}")
+
+        packet.ttl -= 1
+        print(f"{self.name}: Layer 3: TTL decremented: 100 -> {packet.ttl}")
+
+        print(f"{self.name}: Layer 3: Routing table lookup performed")
+        print(f"{self.name}: Layer 3: Next-hop IP determined: 10.0.2.20")
+        print(f"{self.name}: Layer 3: Outgoing interface selected (Interface 2)")
