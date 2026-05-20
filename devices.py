@@ -47,7 +47,7 @@ class Host:
         print(f"{self.name}: Layer 2: Frame created: SRC_MAC={self.mac}, DST_MAC={next_hop_mac}")
         print(f"{self.name}: Layer 2: Frame sent")
 
-         router.receive_frame(frame, incoming_interface="Interface 1")
+        router.receive_frame(frame, incoming_interface="Interface 1")
 
 
 class Router:
