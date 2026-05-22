@@ -60,6 +60,20 @@ class Host:
         print(f"{self.name}: Layer 2: Frame received")
         print(f"{self.name}: Layer 2: Source MAC learned: {frame.src_mac}")
         print(f"{self.name}: Layer 2: Packet delivered to Network Layer \n")
+    
+    def receive_packet(self, packet):
+        print(f"{self.name}: Layer 3: Packet received from Data Link Layer: SRC_IP={packet.src_ip}, DST_IP={packet.dst_ip}, TTL={packet.ttl}")
+        print(f"{self.name}: Layer 3: Destination IP read: {packet.dst_ip}")
+        print(f"{self.name}: Layer 3: Packet identified as local delivery")
+        print(f"{self.name}: Layer 3: Segment delivered to Transport Layer \n")
+
+        segment = packet.payload
+        #SRC_PORT={segment.src_port}, DST_PORT={segment.dst_port}, SEQ={segment.seq},
+        print(f"{self.name}: Layer 4: Segment received from Network Layer")
+        print(f"{self.name}: Layer 4: Checksum verified")
+        print(f"{self.name}: Layer 4: DATA segment delivered to Application Layer. Data size={len(segment.data)}")
+        print(f"{self.name}: Layer 4: Segment created by adding transport layer header (ACK, seq={segment.seq})")
+        print(f"{self.name}: Layer 4: Segment sent to Network Layer \n")
 
 
 class Router:
@@ -73,7 +87,7 @@ class Router:
 
         print(f"{self.name}: Layer 2: Frame received on {incoming_interface}")
         print(f"{self.name}: Layer 2: Source MAC learned: {frame.src_mac} on {incoming_interface}")
-        print(f"{self.name}: Layer 2: Packet delivered to Network Layer")
+        print(f"{self.name}: Layer 2: Packet delivered to Network Layer\n")
 
         packet = frame.payload
 
@@ -107,3 +121,6 @@ class Router:
         print(f"{self.name}: Layer 2: Frame forwarded on Interface 2 \n")
 
         host_b.receive_frame(new_frame)
+        host_b.receive_packet(packet)
+
+
