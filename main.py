@@ -23,7 +23,9 @@ host_b = Host(
     ip=HOST_B_IP,
     mac=HOST_B_MAC,
     default_gateway_ip=R1_IF2_IP,
-    mac_table={}
+    mac_table={
+            R1_IF2_IP: R1_IF2_MAC
+    }
 )
 
 router = Router(
