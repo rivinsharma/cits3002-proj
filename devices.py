@@ -25,7 +25,7 @@ class Host:
 
         print(f"{self.name}: Layer 4: Checksum computed")
         print(f"{self.name}: Layer 4: Segment created by adding transport layer header (DATA, seq=0)")
-        print(f"{self.name}: Layer 4: Segment sent to Network Layer")
+        print(f"{self.name}: Layer 4: Segment sent to Network Layer \n")
 
         packet = Packet(
             src_ip=self.ip,
@@ -38,7 +38,7 @@ class Host:
         print(f"{self.name}: Layer 3: Routing table lookup performed")
         print(f"{self.name}: Layer 3: Next-hop IP determined: {self.default_gateway_ip}")
         print(f"{self.name}: Layer 3: Outgoing interface selected")
-        print(f"{self.name}: Layer 3: Packet forwarded to Data Link Layer")
+        print(f"{self.name}: Layer 3: Packet forwarded to Data Link Layer \n")
 
         next_hop_mac = self.mac_table[self.default_gateway_ip]
 
@@ -52,14 +52,14 @@ class Host:
         )
 
         print(f"{self.name}: Layer 2: Frame created: SRC_MAC={self.mac}, DST_MAC={next_hop_mac}")
-        print(f"{self.name}: Layer 2: Frame sent")
+        print(f"{self.name}: Layer 2: Frame sent \n")
 
         router.receive_frame(frame, "Interface 1", host_b)
 
     def receive_frame(self, frame):
         print(f"{self.name}: Layer 2: Frame received")
         print(f"{self.name}: Layer 2: Source MAC learned: {frame.src_mac}")
-        print(f"{self.name}: Layer 2: Packet delivered to Network Layer")
+        print(f"{self.name}: Layer 2: Packet delivered to Network Layer \n")
 
 
 class Router:
@@ -92,7 +92,7 @@ class Router:
 
         print(f"{self.name}: Layer 3: Next-hop IP determined: {next_hop_ip}")
         print(f"{self.name}: Layer 3: Outgoing interface selected (Interface 2)")
-        print(f"{self.name}: Layer 3: Packet forwarded to Data Link Layer")
+        print(f"{self.name}: Layer 3: Packet forwarded to Data Link Layer \n")
 
         print(f"{self.name}: Layer 2: Packet received from Network Layer")
         print(f"{self.name}: Layer 2: Destination MAC lookup for next-hop IP ({next_hop_ip}) -> {next_hop_mac}")
@@ -104,6 +104,6 @@ class Router:
         )
 
         print(f"{self.name}: Layer 2: Frame created: SRC_MAC={R1_IF2_MAC}, DST_MAC={next_hop_mac}")
-        print(f"{self.name}: Layer 2: Frame forwarded on Interface 2")
+        print(f"{self.name}: Layer 2: Frame forwarded on Interface 2 \n")
 
         host_b.receive_frame(new_frame)
