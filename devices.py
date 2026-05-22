@@ -1,7 +1,6 @@
 from protocol import Segment, Packet, Frame
 from config import *
 
-
 class Host:
     def __init__(self, name, ip, mac, default_gateway_ip, mac_table):
         self.name = name
@@ -133,31 +132,6 @@ class Host:
 
         router.receive_frame(ack_frame, "Interface 2", host)
 
-    def final_receive_packet(self, packet):
-        print(f"{self.name}: Layer 3: Packet received from Data Link Layer: SRC_IP={packet.src_ip}, DST_IP={packet.dst_ip}, TTL={packet.ttl}")
-        print(f"{self.name}: Layer 3: Destination IP read: {packet.dst_ip}")
-
-        if packet.dst_ip != self.ip:
-            print(f"{self.name}: Layer 3: Packet not destined for this host. Packet discarded \n")
-            return
-        
-        else: print(f"{self.name}: Layer 3: Packet identified as local delivery")
-
-        print(f"{self.name}: Layer 3: Segment delivered to Transport Layer \n")
-
-        segment = packet.payload
-        
-        print(f"{self.name}: Layer 4: Segment received from Network Layer")
-
-        if segment.checksum != segment.compute_checksum():
-            print(f"{self.name}: Layer 4: Checksum verification failed! Segment discarded")
-            return
-        
-        else:
-            print(f"{self.name}: Layer 4: Checksum verified")
-
-        print(f"{self.name}: Layer 4: ACK received: seq={segment.seq}")
-
 class Router:
     def __init__(self, name, interfaces, mac_table, routing_table):
         self.name = name
@@ -223,5 +197,3 @@ class Router:
 
             print(f"{self.name}: Layer 2: Frame created: SRC_MAC={R1_IF1_MAC}, DST_MAC={next_hop_mac}")
             print(f"{self.name}: Layer 2: Frame forwarded on Interface 1 \n")
-
-            #host.receive_frame(new_frame)      
