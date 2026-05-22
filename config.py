@@ -4,9 +4,11 @@ HOST_B_IP = "10.0.2.20"
 HOST_A_MAC = "AA:AA:AA:AA:AA:AA"
 HOST_B_MAC = "DD:DD:DD:DD:DD:DD"
 
+#Router interfaces
 R1_IF1_IP = "10.0.1.1"
 R1_IF2_IP = "10.0.2.1"
 
+#Routher MAC addresses for interfaces
 R1_IF1_MAC = "BB:BB:BB:BB:BB:BB"
 R1_IF2_MAC = "CC:CC:CC:CC:CC:CC"
 
