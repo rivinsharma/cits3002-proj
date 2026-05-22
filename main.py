@@ -30,8 +30,16 @@ host_b = Host(
 
 router = Router(
     name="Router R1",
-    interfaces={},
-    mac_table={},
+    interfaces={
+        "Interface 1": {"ip": R1_IF1_IP, "mac": R1_IF1_MAC},
+        "Interface 2": {"ip": R1_IF2_IP, "mac": R1_IF2_MAC}
+    },
+
+    mac_table={
+            HOST_A_IP: HOST_A_MAC,
+            HOST_B_IP: HOST_B_MAC
+    },
+
     routing_table={}
 )
 
