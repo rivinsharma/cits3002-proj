@@ -35,4 +35,6 @@ router = Router(
     routing_table={}
 )
 
+router.host_a = host_a
+
 host_a.send_data(data, HOST_B_IP, router, host_b)
