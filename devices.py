@@ -11,7 +11,7 @@ class Host:
         self.mac_table = mac_table
         self.expected_seq = 0
 
-    def send_data(self, data, destination_ip, router, host_b):
+    def send_data(self, data, destination_ip, router, host):
 
         print(f"{self.name}: Layer 4: Data received from Application Layer. Data size={len(data)}")
 
@@ -54,14 +54,86 @@ class Host:
         print(f"{self.name}: Layer 2: Frame created: SRC_MAC={self.mac}, DST_MAC={next_hop_mac}")
         print(f"{self.name}: Layer 2: Frame sent \n")
 
-        router.receive_frame(frame, "Interface 1", host_b)
+        router.receive_frame(frame, "Interface 1", host)
 
-    def receive_frame(self, frame):
+    def receive_frame(self, frame, router = None, host = None):
         print(f"{self.name}: Layer 2: Frame received")
         print(f"{self.name}: Layer 2: Source MAC learned: {frame.src_mac}")
         print(f"{self.name}: Layer 2: Packet delivered to Network Layer \n")
+
+        self.receive_packet(frame.payload, router, host)
     
-    def receive_packet(self, packet):
+    def receive_packet(self, packet, router = None, host = None):
+        print(f"{self.name}: Layer 3: Packet received from Data Link Layer: SRC_IP={packet.src_ip}, DST_IP={packet.dst_ip}, TTL={packet.ttl}")
+        print(f"{self.name}: Layer 3: Destination IP read: {packet.dst_ip}")
+
+        if packet.dst_ip != self.ip:
+            print(f"{self.name}: Layer 3: Packet not destined for this host. Packet discarded \n")
+            return
+        
+        else: 
+            print(f"{self.name}: Layer 3: Packet identified as local delivery")
+
+        print(f"{self.name}: Layer 3: Segment delivered to Transport Layer \n")
+
+        segment = packet.payload
+        
+        print(f"{self.name}: Layer 4: Segment received from Network Layer")
+
+        if segment.checksum != segment.compute_checksum():
+            print(f"{self.name}: Layer 4: Checksum verification failed! Segment discarded")
+            return
+        
+        else:
+            print(f"{self.name}: Layer 4: Checksum verified")
+        
+        if segment.type == 1:
+            print(f"{self.name}: Layer 4: ACK received: seq={segment.seq}")
+            return
+
+        print(f"{self.name}: Layer 4: DATA segment delivered to Application Layer. Data size={len(segment.data)}")
+
+        ack_segment = Segment(
+            src_port=segment.dst_port,
+            dst_port=segment.src_port,
+            data="ACK",
+            seg_type=1,
+            seq=segment.seq
+        )
+
+        print(f"{self.name}: Layer 4: Segment created by adding transport layer header (ACK, seq={ack_segment.seq})")
+        print(f"{self.name}: Layer 4: Segment sent to Network Layer \n")
+
+        ack_packet = Packet(
+            src_ip= self.ip,
+            dst_ip= packet.src_ip,
+            payload=ack_segment
+        )
+
+        print(f"{self.name}: Layer 3: Segment received from Transport Layer: SRC_IP={ack_packet.src_ip}, DST_IP={ack_packet.dst_ip}, TTL={ack_packet.ttl}")
+        print(f"{self.name}: Layer 3: Destination IP read: {ack_packet.dst_ip}")
+        print(f"{self.name}: Layer 3: Routing table lookup performed")
+        print(f"{self.name}: Layer 3: Next-hop IP determined: {self.default_gateway_ip}")
+        print(f"{self.name}: Layer 3: Outgoing interface selected")
+        print(f"{self.name}: Layer 3: Packet forwarded to Data Link Layer \n")
+
+        next_hop_mac = self.mac_table[self.default_gateway_ip]
+
+        print(f"{self.name}: Layer 2: Packet received from Network Layer")
+        print(f"{self.name}: Layer 2: Destination MAC lookup for next-hop IP ({self.default_gateway_ip}) -> {next_hop_mac}")
+
+        ack_frame = Frame(
+            src_mac=self.mac,
+            dst_mac=next_hop_mac,
+            payload=ack_packet
+        )
+
+        print(f"{self.name}: Layer 2: Frame created: SRC_MAC={self.mac}, DST_MAC={next_hop_mac}")
+        print(f"{self.name}: Layer 2: Frame sent \n")
+
+        router.receive_frame(ack_frame, "Interface 2", host)
+
+    def final_receive_packet(self, packet):
         print(f"{self.name}: Layer 3: Packet received from Data Link Layer: SRC_IP={packet.src_ip}, DST_IP={packet.dst_ip}, TTL={packet.ttl}")
         print(f"{self.name}: Layer 3: Destination IP read: {packet.dst_ip}")
 
@@ -84,37 +156,7 @@ class Host:
         else:
             print(f"{self.name}: Layer 4: Checksum verified")
 
-        print(f"{self.name}: Layer 4: DATA segment delivered to Application Layer. Data size={len(segment.data)}")
-        print(f"{self.name}: Layer 4: Segment created by adding transport layer header (ACK, seq={segment.seq})")
-        print(f"{self.name}: Layer 4: Segment sent to Network Layer \n")
-
-        packet = Packet(
-            src_ip= self.ip,
-            dst_ip= packet.src_ip,
-            payload=segment
-        )
-
-        print(f"{self.name}: Layer 3: Segment received from Transport Layer: SRC_IP={packet.src_ip}, DST_IP={packet.dst_ip}, TTL={packet.ttl}")
-        print(f"{self.name}: Layer 3: Destination IP read: {packet.dst_ip}")
-        print(f"{self.name}: Layer 3: Routing table lookup performed")
-        print(f"{self.name}: Layer 3: Next-hop IP determined: {self.default_gateway_ip}")
-        print(f"{self.name}: Layer 3: Outgoing interface selected")
-        print(f"{self.name}: Layer 3: Packet forwarded to Data Link Layer \n")
-
-        next_hop_mac = self.mac_table[self.default_gateway_ip]
-
-        print(f"{self.name}: Layer 2: Packet received from Network Layer")
-        print(f"{self.name}: Layer 2: Destination MAC lookup for next-hop IP ({self.default_gateway_ip}) -> {next_hop_mac}")
-
-        frame = Frame(
-            src_mac=self.mac,
-            dst_mac=next_hop_mac,
-            payload=packet
-        )
-
-        print(f"{self.name}: Layer 2: Frame created: SRC_MAC={self.mac}, DST_MAC={next_hop_mac}")
-        print(f"{self.name}: Layer 2: Frame sent \n")
-
+        print(f"{self.name}: Layer 4: ACK received: seq={segment.seq}")
 
 class Router:
     def __init__(self, name, interfaces, mac_table, routing_table):
@@ -123,8 +165,7 @@ class Router:
         self.mac_table = mac_table
         self.routing_table = routing_table
 
-    def receive_frame(self, frame, incoming_interface, host_b):
-
+    def receive_frame(self, frame, incoming_interface, host):
         print(f"{self.name}: Layer 2: Frame received on {incoming_interface}")
         print(f"{self.name}: Layer 2: Source MAC learned: {frame.src_mac} on {incoming_interface}")
         print(f"{self.name}: Layer 2: Packet delivered to Network Layer\n")
@@ -141,26 +182,46 @@ class Router:
 
         print(f"{self.name}: Layer 3: Routing table lookup performed")
 
-        next_hop_ip = host_b.ip
-        next_hop_mac = HOST_B_MAC
+        if incoming_interface == "Interface 1":
+            next_hop_ip = host.ip
+            next_hop_mac = HOST_B_MAC
 
-        print(f"{self.name}: Layer 3: Next-hop IP determined: {next_hop_ip}")
-        print(f"{self.name}: Layer 3: Outgoing interface selected (Interface 2)")
-        print(f"{self.name}: Layer 3: Packet forwarded to Data Link Layer \n")
+            print(f"{self.name}: Layer 3: Next-hop IP determined: {next_hop_ip}")
+            print(f"{self.name}: Layer 3: Outgoing interface selected (Interface 2)")
+            print(f"{self.name}: Layer 3: Packet forwarded to Data Link Layer \n")
 
-        print(f"{self.name}: Layer 2: Packet received from Network Layer")
-        print(f"{self.name}: Layer 2: Destination MAC lookup for next-hop IP ({next_hop_ip}) -> {next_hop_mac}")
+            print(f"{self.name}: Layer 2: Packet received from Network Layer")
+            print(f"{self.name}: Layer 2: Destination MAC lookup for next-hop IP ({next_hop_ip}) -> {next_hop_mac}")
 
-        new_frame = Frame(
-            src_mac=R1_IF2_MAC,
-            dst_mac=next_hop_mac,
-            payload=packet
-        )
+            new_frame = Frame(
+                src_mac=R1_IF2_MAC,
+                dst_mac=next_hop_mac,
+                payload=packet
+            )
 
-        print(f"{self.name}: Layer 2: Frame created: SRC_MAC={R1_IF2_MAC}, DST_MAC={next_hop_mac}")
-        print(f"{self.name}: Layer 2: Frame forwarded on Interface 2 \n")
+            print(f"{self.name}: Layer 2: Frame created: SRC_MAC={R1_IF2_MAC}, DST_MAC={next_hop_mac}")
+            print(f"{self.name}: Layer 2: Frame forwarded on Interface 2 \n")
 
-        host_b.receive_frame(new_frame)
-        host_b.receive_packet(packet)
+            host.receive_frame(new_frame, router=self, host=frame.payload.src_ip)
 
+        elif incoming_interface == "Interface 2":
+            next_hop_ip = packet.dst_ip
+            next_hop_mac = HOST_A_MAC
 
+            print(f"{self.name}: Layer 3: Next-hop IP determined: {next_hop_ip}")
+            print(f"{self.name}: Layer 3: Outgoing interface selected (Interface 1)")
+            print(f"{self.name}: Layer 3: Packet forwarded to Data Link Layer \n")
+
+            print(f"{self.name}: Layer 2: Packet received from Network Layer")
+            print(f"{self.name}: Layer 2: Destination MAC lookup for next-hop IP ({next_hop_ip}) -> {next_hop_mac}")
+
+            new_frame = Frame(
+                src_mac=R1_IF1_MAC,
+                dst_mac=next_hop_mac,
+                payload=packet
+            )
+
+            print(f"{self.name}: Layer 2: Frame created: SRC_MAC={R1_IF1_MAC}, DST_MAC={next_hop_mac}")
+            print(f"{self.name}: Layer 2: Frame forwarded on Interface 1 \n")
+
+            #host.receive_frame(new_frame)      
