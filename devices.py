@@ -130,7 +130,7 @@ class Host:
         print(f"{self.name}: Layer 2: Frame created: SRC_MAC={self.mac}, DST_MAC={next_hop_mac}")
         print(f"{self.name}: Layer 2: Frame sent \n")
 
-        router.receive_frame(ack_frame, "Interface 2", host)
+        router.receive_frame(ack_frame, "Interface 2", self)
 
 class Router:
     def __init__(self, name, interfaces, mac_table, routing_table):
@@ -176,7 +176,7 @@ class Router:
             print(f"{self.name}: Layer 2: Frame created: SRC_MAC={R1_IF2_MAC}, DST_MAC={next_hop_mac}")
             print(f"{self.name}: Layer 2: Frame forwarded on Interface 2 \n")
 
-            host.receive_frame(new_frame, router=self, host=frame.payload.src_ip)
+            host.receive_frame(new_frame, router=self, host=None)
 
         elif incoming_interface == "Interface 2":
             next_hop_ip = packet.dst_ip
@@ -197,3 +197,5 @@ class Router:
 
             print(f"{self.name}: Layer 2: Frame created: SRC_MAC={R1_IF1_MAC}, DST_MAC={next_hop_mac}")
             print(f"{self.name}: Layer 2: Frame forwarded on Interface 1 \n")
+
+            self.host_a.receive_frame(new_frame, router=self, host=None)
