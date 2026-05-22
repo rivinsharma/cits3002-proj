@@ -70,7 +70,7 @@ class Host:
         print(f"{self.name}: Layer 3: Destination IP read: {packet.dst_ip}")
 
         if packet.dst_ip != self.ip:
-            print(f"{self.name}: Layer 3: Packet not destined for this host. Packet discarded \n")
+            print(f"{self.name}: Layer 3: Packet not meant for this host. Packet discarded \n")
             return
         
         else: 
