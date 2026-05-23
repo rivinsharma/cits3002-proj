@@ -40,7 +40,16 @@ router = Router(
             HOST_B_IP: HOST_B_MAC
     },
 
-    routing_table={}
+    routing_table={
+        "10.0.1.0/24": {
+            "interface": "Interface 1",
+            "next_hop": HOST_A_IP
+        },
+        "10.0.2.0/24": {
+            "interface": "Interface 2",
+            "next_hop": HOST_B_IP
+        }
+    }
 )
 
 router.host_a = host_a

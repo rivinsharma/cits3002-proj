@@ -178,6 +178,15 @@ class Router:
         self.mac_table = mac_table
         self.routing_table = routing_table
 
+    def lookup_route(self, destination_ip):
+        if destination_ip.startswith("10.0.1."):
+            return self.routing_table["10.0.1.0/24"]
+    
+        if destination_ip.startswith("10.0.2."):
+            return self.routing_table["10.0.2.0/24"]
+    
+        return None
+
     def receive_frame(self, frame, incoming_interface, host):
         print(f"{self.name}: Layer 2: Frame received on {incoming_interface}")
         print(f"{self.name}: Layer 2: Source MAC learned: {frame.src_mac} on {incoming_interface}")
@@ -199,48 +208,33 @@ class Router:
 
         print(f"{self.name}: Layer 3: Routing table lookup performed")
 
-        if incoming_interface == "Interface 1":
-            next_hop_ip = packet.dst_ip
-            next_hop_mac = self.mac_table[next_hop_ip]
+        route = self.lookup_route(packet.dst_ip)
 
-            print(f"{self.name}: Layer 3: Next-hop IP determined: {next_hop_ip}")
-            print(f"{self.name}: Layer 3: Outgoing interface selected (Interface 2)")
-            print(f"{self.name}: Layer 3: Packet forwarded to Data Link Layer \n")
-
-            print(f"{self.name}: Layer 2: Packet received from Network Layer")
-            print(f"{self.name}: Layer 2: Destination MAC lookup for next-hop IP ({next_hop_ip}) -> {next_hop_mac}")
-
-            new_frame = Frame(
-                src_mac=self.interfaces["Interface 2"]["mac"],
-                dst_mac=next_hop_mac,
-                payload=packet
-            )
-
-            print(f"{self.name}: Layer 2: Frame created: SRC_MAC={new_frame.src_mac}, DST_MAC={next_hop_mac}")
-            print(f"{self.name}: Layer 2: Frame forwarded on Interface 2 \n")
-
-            #Calls the receive_frame function of Host B to start the process of delivering the packet to Host B.
+        if route is None:
+            print(f"{self.name}: Layer 3: No route found. Packet discarded")
+            return
+        
+        outgoing_interface = route["interface"]
+        next_hop_ip = route["next_hop"]
+        next_hop_mac = self.mac_table[next_hop_ip]
+        
+        print(f"{self.name}: Layer 3: Next-hop IP determined: {next_hop_ip}")
+        print(f"{self.name}: Layer 3: Outgoing interface selected ({outgoing_interface})")
+        print(f"{self.name}: Layer 3: Packet forwarded to Data Link Layer \n")
+        
+        print(f"{self.name}: Layer 2: Packet received from Network Layer")
+        print(f"{self.name}: Layer 2: Destination MAC lookup for next-hop IP ({next_hop_ip}) -> {next_hop_mac}")
+        
+        new_frame = Frame(
+            src_mac=self.interfaces[outgoing_interface]["mac"],
+            dst_mac=next_hop_mac,
+            payload=packet
+        )
+        
+        print(f"{self.name}: Layer 2: Frame created: SRC_MAC={new_frame.src_mac}, DST_MAC={next_hop_mac}")
+        print(f"{self.name}: Layer 2: Frame forwarded on {outgoing_interface} \n")
+        
+        if outgoing_interface == "Interface 2":
             host.receive_frame(new_frame, router=self, host=None)
-
-        elif incoming_interface == "Interface 2":
-            next_hop_ip = packet.dst_ip
-            next_hop_mac = self.mac_table[next_hop_ip]
-
-            print(f"{self.name}: Layer 3: Next-hop IP determined: {next_hop_ip}")
-            print(f"{self.name}: Layer 3: Outgoing interface selected (Interface 1)")
-            print(f"{self.name}: Layer 3: Packet forwarded to Data Link Layer \n")
-
-            print(f"{self.name}: Layer 2: Packet received from Network Layer")
-            print(f"{self.name}: Layer 2: Destination MAC lookup for next-hop IP ({next_hop_ip}) -> {next_hop_mac}")
-
-            new_frame = Frame(
-                src_mac=self.interfaces["Interface 1"]["mac"],
-                dst_mac=next_hop_mac,
-                payload=packet
-            )
-
-            print(f"{self.name}: Layer 2: Frame created: SRC_MAC={new_frame.src_mac}, DST_MAC={next_hop_mac}")
-            print(f"{self.name}: Layer 2: Frame forwarded on Interface 1 \n")
-
-            #Calls the receive_frame function of Host A to start the process of delivering the packet to Host A.
+        else:
             self.host_a.receive_frame(new_frame, router=self, host=None)
