@@ -9,6 +9,8 @@ class Host:
         self.default_gateway_ip = default_gateway_ip
         self.mac_table = mac_table
         self.expected_seq = 0
+        self.received_ack = None
+        self.previous_ack = -1
 
     def send_data(self, data, destination_ip, router, host):
 
@@ -16,48 +18,55 @@ class Host:
 
         segments = [data[i:i+MAX_SEGMENT_DATA] for i in range(0, len(data), MAX_SEGMENT_DATA)]
 
-        for seq, segments in enumerate(segments):
-            segment = Segment(
-                src_port=5000,
-                dst_port=80,
-                data=segments,
-                seg_type=0,
-                seq=seq
-            )
-             
-            print(f"{self.name}: Layer 4: Checksum computed")
-            print(f"{self.name}: Layer 4: Segment created by adding transport layer header (DATA, seq={segment.seq})")
-            print(f"{self.name}: Layer 4: Segment sent to Network Layer \n")
+        for i, segment_data in enumerate(segments):
+            while True:
+                segment = Segment(
+                    src_port=5000,
+                    dst_port=80,
+                    data=segment_data,
+                    seg_type=0,
+                    seq= i%2
+                )
+                
+                print(f"{self.name}: Layer 4: Checksum computed")
+                print(f"{self.name}: Layer 4: Segment created by adding transport layer header (DATA, seq={segment.seq})")
+                print(f"{self.name}: Layer 4: Segment sent to Network Layer \n")
 
-            packet = Packet(
-                src_ip=self.ip,
-                dst_ip=destination_ip,
-                payload=segment
-            )
+                packet = Packet(
+                    src_ip=self.ip,
+                    dst_ip=destination_ip,
+                    payload=segment
+                )
 
-            print(f"{self.name}: Layer 3: Segment received from Transport Layer: SRC_IP={self.ip}, DST_IP={destination_ip}, TTL={packet.ttl}")
-            print(f"{self.name}: Layer 3: Destination IP read: {destination_ip}")
-            print(f"{self.name}: Layer 3: Routing table lookup performed")
-            print(f"{self.name}: Layer 3: Next-hop IP determined: {self.default_gateway_ip}")
-            print(f"{self.name}: Layer 3: Outgoing interface selected")
-            print(f"{self.name}: Layer 3: Packet forwarded to Data Link Layer \n")
+                print(f"{self.name}: Layer 3: Segment received from Transport Layer: SRC_IP={self.ip}, DST_IP={destination_ip}, TTL={packet.ttl}")
+                print(f"{self.name}: Layer 3: Destination IP read: {destination_ip}")
+                print(f"{self.name}: Layer 3: Routing table lookup performed")
+                print(f"{self.name}: Layer 3: Next-hop IP determined: {self.default_gateway_ip}")
+                print(f"{self.name}: Layer 3: Outgoing interface selected")
+                print(f"{self.name}: Layer 3: Packet forwarded to Data Link Layer \n")
 
-            next_hop_mac = self.mac_table[self.default_gateway_ip]
+                next_hop_mac = self.mac_table[self.default_gateway_ip]
 
-            print(f"{self.name}: Layer 2: Packet received from Network Layer")
-            print(f"{self.name}: Layer 2: Destination MAC lookup for next-hop IP ({self.default_gateway_ip}) -> {next_hop_mac}")
+                print(f"{self.name}: Layer 2: Packet received from Network Layer")
+                print(f"{self.name}: Layer 2: Destination MAC lookup for next-hop IP ({self.default_gateway_ip}) -> {next_hop_mac}")
 
-            frame = Frame(
-                src_mac=self.mac,
-                dst_mac=next_hop_mac,
-                payload=packet
-            )
+                frame = Frame(
+                    src_mac=self.mac,
+                    dst_mac=next_hop_mac,
+                    payload=packet
+                )
 
-            print(f"{self.name}: Layer 2: Frame created: SRC_MAC={self.mac}, DST_MAC={next_hop_mac}")
-            print(f"{self.name}: Layer 2: Frame sent \n")
+                print(f"{self.name}: Layer 2: Frame created: SRC_MAC={self.mac}, DST_MAC={next_hop_mac}")
+                print(f"{self.name}: Layer 2: Frame sent \n")
 
-            router.receive_frame(frame, "Interface 1", host)
+                router.receive_frame(frame, "Interface 1", host)
 
+                if self.received_ack == i%2:
+                    self.previous_ack = self.received_ack
+                    break
+                else:
+                    print(f"{self.name}: Layer 4: No ACK received for seq={segment.seq}. Retransmitting segment \n")
+                
     def receive_frame(self, frame, router = None, host = None):
         print(f"{self.name}: Layer 2: Frame received")
         print(f"{self.name}: Layer 2: Source MAC learned: {frame.src_mac}")
@@ -91,17 +100,29 @@ class Host:
         
         if segment.type == 1:
             print(f"{self.name}: Layer 4: ACK received: seq={segment.seq}")
+            self.received_ack = segment.seq 
             return
-
-        print(f"{self.name}: Layer 4: DATA segment delivered to Application Layer. Data size={len(segment.data)}")
-
-        ack_segment = Segment(
-            src_port=segment.dst_port,
-            dst_port=segment.src_port,
-            data="",
-            seg_type=1,
-            seq=segment.seq
-        )
+        
+        if segment.type == 0:
+            if segment.seq == self.expected_seq:
+                print(f"{self.name}: Layer 4: DATA segment delivered to Application Layer. Data size={len(segment.data)}")
+                self.expected_seq = 1 - self.expected_seq
+                ack_segment = Segment(
+                    src_port=segment.dst_port,
+                    dst_port=segment.src_port,
+                    data="",
+                    seg_type=1,
+                    seq=segment.seq
+                ) 
+            else:
+                print(f"{self.name}: Layer 4: Incorrect DATA segment received (seq={self.previous_ack}). Resending segment.\n")
+                ack_segment = Segment(
+                    src_port=segment.dst_port,
+                    dst_port=segment.src_port,
+                    data="",
+                    seg_type=1,
+                    seq=previous_ack
+                )
 
         print(f"{self.name}: Layer 4: Segment created by adding transport layer header (ACK, seq={ack_segment.seq})")
         print(f"{self.name}: Layer 4: Segment sent to Network Layer \n")
@@ -154,6 +175,9 @@ class Router:
 
         old_ttl = packet.ttl
         packet.ttl -= 1
+        if packet.ttl <= 0:
+            print(f"{self.name}: Layer 3: TTL expired. Packet discarded \n")
+            return
 
         print(f"{self.name}: Layer 3: TTL decremented: {old_ttl} -> {packet.ttl}")
 
