@@ -23,6 +23,7 @@ class Host:
         #Loops over the list of segments and sends each one.
         for i, segment_data in enumerate(segments):
             while True:
+                self.received_ack = None
                 segment = Segment(
                     src_port=5000,
                     dst_port=80,
@@ -132,7 +133,7 @@ class Host:
                 dst_port=segment.src_port,
                 data="",
                 seg_type=1,
-                seq=previous_ack
+                seq=self.previous_ack
             )
 
         print(f"{self.name}: Layer 4: Segment created by adding transport layer header (ACK, seq={ack_segment.seq})")
