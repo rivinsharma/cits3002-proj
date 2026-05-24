@@ -1,7 +1,7 @@
 # CITS3002 Mini Internet Protocol Stack Simulator
 
 ## Overview
-This projects goal was to implement a simplified network communication simulator (via Python). Specifically, the simulator models the communication between two hosts through a router. This is to demonstrate the responsibilities within the Transport, Network, and Data Link layers.
+This project's goal was to implement a simplified network communication simulator (via Python). Specifically, the simulator models the communication between two hosts through a router. This is to demonstrate the responsibilities within the Transport, Network, and Data Link layers.
 
 The simulator demonstrates the responsibilites through simulating:
 - Reliable data transfer using a simplified rdt2.2 style protocol
@@ -137,7 +137,7 @@ python main.py 1200
 
 Maximum segment size: 500
 
-This means that if data over 500 bytes is sent then it is segmented. E.g 1200 segments into 2, 500 bytes and 1, 200 byte
+This means that data sent which is greater than 500 bytes must be segmented. E.g 1200 bytes, results in two segments of 500 bytes and one segement of size 200 bytes.
 
 ## Features demonstrated in program
 - Encapsulation
